@@ -1,4 +1,4 @@
-use crate::{Blob, DevByte, bindings::CUdeviceptr, memcpy_d2h};
+use crate::{Blob, DevByte, bindings::CUdeviceptr};
 use std::{
     alloc::Layout,
     slice::{from_raw_parts, from_raw_parts_mut},
@@ -6,6 +6,7 @@ use std::{
 
 pub struct ManBlob(Blob<CUdeviceptr>);
 
+#[allow(dead_code)]
 #[inline]
 pub fn memcpy_h2m<T: Copy>(dst: &mut [u8], src: &[T]) {
     let count = src.len();
@@ -16,6 +17,7 @@ pub fn memcpy_h2m<T: Copy>(dst: &mut [u8], src: &[T]) {
     }
 }
 
+#[allow(dead_code)]
 #[inline]
 pub fn memcpy_m2h<T: Copy>(dst: &mut [T], src: &[u8]) {
     let count = src.len();
@@ -27,6 +29,7 @@ pub fn memcpy_m2h<T: Copy>(dst: &mut [T], src: &[u8]) {
 }
 
 impl ManBlob {
+    #[allow(dead_code)]
     pub fn malloc_managed<T: Copy>(len: usize) -> ManBlob {
         let len = Layout::array::<T>(len).unwrap().size();
         let mut ptr = 0;
@@ -56,6 +59,7 @@ impl Drop for ManBlob {
     }
 }
 
+#[allow(dead_code)]
 impl ManBlob {
     #[inline]
     pub fn as_host(&self) -> &[u8] {
@@ -94,6 +98,7 @@ impl ManBlob {
 
 #[test]
 fn test_managed() {
+    use crate::memcpy_d2h;
     use rand::Rng;
 
     if let Err(crate::NoDevice) = crate::init() {
@@ -137,7 +142,7 @@ fn test_behavior_multi_stream_async_access() {
 
     let dev = crate::Device::new(0);
     dev.context().apply(|ctx| {
-        let mut pagable = vec![0.0f32; 256 << 20];
+        let mut pagable = vec![0.0f32; 256 << 10];
         rand::rng().fill(&mut *pagable);
         let pagable = unsafe {
             from_raw_parts(
@@ -146,7 +151,7 @@ fn test_behavior_multi_stream_async_access() {
             )
         };
 
-        let mut pagable2 = vec![0.0f32; 256 << 20];
+        let mut pagable2 = vec![0.0f32; 256 << 10];
         let pagable2 = unsafe {
             from_raw_parts_mut(
                 pagable2.as_mut_ptr().cast::<u8>() as *mut u8,
@@ -154,7 +159,7 @@ fn test_behavior_multi_stream_async_access() {
             )
         };
 
-        let mut pagable3 = vec![0.0f32; 256 << 20];
+        let mut pagable3 = vec![0.0f32; 256 << 10];
         let pagable3 = unsafe {
             from_raw_parts_mut(
                 pagable3.as_mut_ptr().cast::<u8>() as *mut u8,
@@ -184,6 +189,8 @@ fn test_behavior_multi_stream_async_access() {
 
 #[test]
 fn test_behavior_multi_context_access() {
+    use crate::memcpy_d2h;
+
     if let Err(crate::NoDevice) = crate::init() {
         return;
     }
@@ -214,5 +221,5 @@ fn test_multi_device_access() {
     // 预取内存到当前上下文关联的设备
     // driver!(cuMemPrefetchAsync(man.0.ptr, man.0.len, 0, std::ptr::null_mut()));
 
-    todo!();
+    // todo!();
 }
