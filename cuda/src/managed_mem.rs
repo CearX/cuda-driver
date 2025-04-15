@@ -44,7 +44,7 @@ impl ManBlob {
     }
 
     pub fn _from_host_man<T: Copy>(slice: &[T]) -> ManBlob {
-        let man = ManBlob::malloc_managed::<T>(slice.len());
+        let mut man = ManBlob::malloc_managed::<T>(slice.len());
         memcpy_h2m(man.as_host_mut(), slice);
         man
     }
@@ -70,7 +70,7 @@ impl ManBlob {
         }
     }
     #[inline]
-    pub fn as_host_mut(&self) -> &mut [u8] {
+    pub fn as_host_mut(&mut self) -> &mut [u8] {
         if self.0.len == 0 {
             &mut []
         } else {
@@ -87,7 +87,7 @@ impl ManBlob {
         }
     }
     #[inline]
-    pub fn as_dev_mut(&self) -> &mut [DevByte] {
+    pub fn as_dev_mut(&mut self) -> &mut [DevByte] {
         if self.0.len == 0 {
             &mut []
         } else {
@@ -124,7 +124,7 @@ fn test_managed() {
         };
 
         let size = pagable.len();
-        let man = ManBlob::malloc_managed::<u8>(size);
+        let mut man = ManBlob::malloc_managed::<u8>(size);
         memcpy_h2m(man.as_host_mut(), pagable);
         memcpy_d2h(pagable2, man.as_dev());
 
@@ -168,7 +168,7 @@ fn test_behavior_multi_stream_async_access() {
         };
 
         let size = pagable.len();
-        let man = ManBlob::malloc_managed::<u8>(size);
+        let mut man = ManBlob::malloc_managed::<u8>(size);
 
         let stream0 = ctx.stream();
         let stream1 = ctx.stream();
@@ -200,7 +200,7 @@ fn test_behavior_multi_context_access() {
     let ctx1 = dev.context();
     let ctx2 = dev.context();
     let man_mem = ctx1.apply(|_ctx| {
-        let man_mem = ManBlob::malloc_managed::<u8>(size);
+        let mut man_mem = ManBlob::malloc_managed::<u8>(size);
         crate::memcpy_h2d(man_mem.as_dev_mut(), host.as_slice()); // ctx1访问man_mem
         man_mem
     });
